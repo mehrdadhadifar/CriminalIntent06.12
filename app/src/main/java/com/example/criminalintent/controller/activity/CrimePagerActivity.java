@@ -65,6 +65,11 @@ public class CrimePagerActivity extends AppCompatActivity implements CrimeDetail
         //nothing
     }
 
+    @Override
+    public void onCrimeDeleted(Crime crime) {
+        finish();
+    }
+
     private class CrimeViewPagerAdapter extends FragmentStateAdapter {
 
         private List<Crime> mCrimes;
@@ -87,7 +92,7 @@ public class CrimePagerActivity extends AppCompatActivity implements CrimeDetail
         @Override
         public Fragment createFragment(int position) {
             Log.d(TAG, "position: " + (position + 1));
-            return CrimeDetailFragment.newInstance(mCrimes.get(position).getId());
+            return CrimeDetailFragment.newInstance(mCrimes.get(position).getUUID());
         }
 
         @Override

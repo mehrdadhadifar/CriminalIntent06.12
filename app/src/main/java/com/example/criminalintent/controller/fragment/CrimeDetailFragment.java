@@ -16,6 +16,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -76,6 +79,7 @@ public class CrimeDetailFragment extends Fragment {
      * Using factory pattern to create this fragment. every class that want
      * to create this fragment should always call this method "only".
      * no class should call constructor any more.
+     *
      * @param crimeId this fragment need crime id to work properly.
      * @return new CrimeDetailFragment
      */
@@ -105,11 +109,14 @@ public class CrimeDetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
+        setHasOptionsMenu(true);
 
         mRepository = CrimeDBRepository.getInstance(getActivity());
 
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = mRepository.get(crimeId);
+        if (mCrime == null)
+            Log.d(TAG, "crime is null");
 
         mPhotoFile = mRepository.getPhotoFile(getActivity(), mCrime);
     }
@@ -132,10 +139,26 @@ public class CrimeDetailFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-
         outState.putSerializable(BUNDLE_CRIME, mCrime);
     }
 
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_crime_detail, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_delete_crime:
+                mRepository.delete(mCrime);
+                mCallbacks.onCrimeDeleted(mCrime);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+
+        }
+    }
     /*@Override
     public void onPause() {
         super.onPause();
@@ -168,14 +191,12 @@ public class CrimeDetailFragment extends Fragment {
         mEditTextCrimeTitle.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
             }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 mCrime.setTitle(charSequence.toString());
                 Log.d(TAG, mCrime.toString());
-
                 updateCrime();
             }
 
@@ -257,7 +278,7 @@ public class CrimeDetailFragment extends Fragment {
                 takePictureIntent,
                 PackageManager.MATCH_DEFAULT_ONLY);
 
-        for (ResolveInfo activity: activities) {
+        for (ResolveInfo activity : activities) {
             getActivity().grantUriPermission(activity.activityInfo.packageName,
                     photoURI,
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -266,7 +287,7 @@ public class CrimeDetailFragment extends Fragment {
 
     private String getReportText() {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-        String dateString = simpleDateFormat.format(mCrime.getDate()) ;
+        String dateString = simpleDateFormat.format(mCrime.getDate());
 
         String solvedString = mCrime.isSolved() ?
                 getString(R.string.crime_report_solved) :
@@ -306,7 +327,7 @@ public class CrimeDetailFragment extends Fragment {
         } else if (requestCode == REQUEST_CODE_SELECT_CONTACT) {
             Uri contactUri = data.getData();
 
-            String[] columns = new String[] {ContactsContract.Contacts.DISPLAY_NAME};
+            String[] columns = new String[]{ContactsContract.Contacts.DISPLAY_NAME};
             Cursor cursor = getActivity().getContentResolver().query(contactUri,
                     columns,
                     null,
@@ -348,5 +369,7 @@ public class CrimeDetailFragment extends Fragment {
 
     public interface Callbacks {
         void onCrimeUpdated(Crime crime);
+
+        void onCrimeDeleted(Crime crime);
     }
 }

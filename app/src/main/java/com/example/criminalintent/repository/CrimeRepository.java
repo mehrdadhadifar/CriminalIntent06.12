@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+/*
 
 public class CrimeRepository implements IRepository<Crime> {
 
@@ -48,7 +49,7 @@ public class CrimeRepository implements IRepository<Crime> {
     @Override
     public Crime get(UUID uuid) {
         for (Crime crime: mCrimes) {
-            if (crime.getId().equals(uuid))
+            if (crime.getUUID().equals(uuid))
                 return crime;
         }
 
@@ -58,7 +59,7 @@ public class CrimeRepository implements IRepository<Crime> {
     //Update one
     @Override
     public void update(Crime crime) {
-        Crime updateCrime = get(crime.getId());
+        Crime updateCrime = get(crime.getUUID());
         updateCrime.setTitle(crime.getTitle());
         updateCrime.setDate(crime.getDate());
         updateCrime.setSolved(crime.isSolved());
@@ -68,7 +69,7 @@ public class CrimeRepository implements IRepository<Crime> {
     @Override
     public void delete(Crime crime) {
         for (int i = 0; i < mCrimes.size(); i++) {
-            if (mCrimes.get(i).getId().equals(crime.getId())) {
+            if (mCrimes.get(i).getUUID().equals(crime.getUUID())) {
                 mCrimes.remove(i);
                 return;
             }
@@ -90,7 +91,7 @@ public class CrimeRepository implements IRepository<Crime> {
     @Override
     public int getPosition(UUID uuid) {
         for (int i = 0; i < mCrimes.size(); i++) {
-            if (mCrimes.get(i).getId().equals(uuid))
+            if (mCrimes.get(i).getUUID().equals(uuid))
                 return i;
         }
         return -1;
@@ -102,3 +103,4 @@ public class CrimeRepository implements IRepository<Crime> {
         return photoFile;
     }
 }
+*/

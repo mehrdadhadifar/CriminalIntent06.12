@@ -1,12 +1,12 @@
 package com.example.criminalintent.controller.fragment;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,10 +21,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.criminalintent.R;
-import com.example.criminalintent.controller.activity.CrimePagerActivity;
 import com.example.criminalintent.model.Crime;
 import com.example.criminalintent.repository.CrimeDBRepository;
 import com.example.criminalintent.repository.IRepository;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
 
@@ -152,11 +152,13 @@ public class CrimeListFragment extends Fragment {
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mRecyclerView.setAdapter(mAdapter);
+            ItemTouchHelper itemTouchHelper = new
+                    ItemTouchHelper(new SwipeToDeleteCallback(mAdapter));
+            itemTouchHelper.attachToRecyclerView(mRecyclerView);
         } else {
             mAdapter.setCrimes(crimes);
             mAdapter.notifyDataSetChanged();
         }
-
         updateSubtitle();
     }
 
@@ -210,7 +212,6 @@ public class CrimeListFragment extends Fragment {
             mCrime = crime;
             mTextViewTitle.setText(crime.getTitle());
             mTextViewDate.setText(crime.getDate().toString());
-
             mImageViewSolved.setVisibility(crime.isSolved() ? View.VISIBLE : View.INVISIBLE);
         }
     }
@@ -223,6 +224,8 @@ public class CrimeListFragment extends Fragment {
     private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
 
         private List<Crime> mCrimes;
+        private Crime mRecentlyDeletedItem;
+        private int mRecentlyDeletedItemPosition;
 
         public List<Crime> getCrimes() {
             return mCrimes;
@@ -260,9 +263,56 @@ public class CrimeListFragment extends Fragment {
             Crime crime = mCrimes.get(position);
             holder.bindCrime(crime);
         }
+
+        public void deleteItem(int position) {
+            mRecentlyDeletedItem = mCrimes.get(position);
+            mRecentlyDeletedItemPosition = position;
+            mRepository.delete(mCrimes.get(position));
+            mCrimes.remove(position);
+            notifyItemRemoved(position);
+            showUndoSnackBar();
+        }
+
+        private void showUndoSnackBar() {
+//            View view = mActivity.findViewById(R.id.coordinator_layout);
+            Snackbar snackbar = Snackbar.make(mRecyclerView, R.string.undo_delete,
+                    Snackbar.LENGTH_LONG);
+            snackbar.setAction(R.string.undo_delete, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mCrimes.add(mRecentlyDeletedItemPosition,
+                            mRecentlyDeletedItem);
+                    mRepository.insert(mCrimes.get(mRecentlyDeletedItemPosition));
+                    notifyItemInserted(mRecentlyDeletedItemPosition);
+                }
+            });
+            snackbar.show();
+        }
     }
+
 
     public interface CallBacks {
         void onCrimeSelected(Crime crime);
     }
+
+    public class SwipeToDeleteCallback extends ItemTouchHelper.SimpleCallback {
+        private CrimeAdapter mAdapter;
+
+        public SwipeToDeleteCallback(CrimeAdapter adapter) {
+            super(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+            mAdapter = adapter;
+        }
+
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            int position = viewHolder.getAdapterPosition();
+            mAdapter.deleteItem(position);
+        }
+    }
+
 }
